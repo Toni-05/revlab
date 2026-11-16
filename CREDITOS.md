@@ -16,5 +16,7 @@ O modelo de som sintetizado segue Baldan et al., "Physically informed car engine
 | Subaru Impreza WRX STI | 2006 Subaru Impreza WRX STI sedan (22365152501) (cropped).jpg | Jeremy from Sydney, Australia | CC BY 2.0 |
 | Honda S2000 | Honda S2000 2005.jpg | Calreyn88 | CC BY-SA 4.0 |
 | Red Bull RB9 | Renault Red Bull RB9 - Sebastian Vettel (8493300034).jpg | Magic Aviation | CC BY 2.0 |
+| Lamborghini Huracán | 2016-03-01 Geneva Motor Show 0794 Huracán LP610-4 Spyder.jpg | Norbert Aepli, Switzerland (User:Noebu) | CC BY 4.0 |
+| Bugatti Chiron | Bugatti Chiron 110 Ans, GIMS 2019, Le Grand-Saconnex (GIMS9979).jpg | Matti Blume | CC BY-SA 4.0 |
 
 As fotos derivadas mantêm a licença de cada original.
