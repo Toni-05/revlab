@@ -332,6 +332,8 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
     <div class="volrow"><input type="range" id="vol" min="0" max="100" value="80"></div>
     <h3>Tipo de som</h3>
     <div class="models" id="models"><button type="button" class="btn" data-k="s">Gravado</button><button type="button" class="btn" data-k="w">Sintetizado</button></div>
+    <h3>Estalos de escape</h3>
+    <div class="models"><span class="userNow">Estalos ao desacelerar</span><button type="button" class="btn" id="popsBtn">Desligados</button></div>
     <h3>Fontes de velocidade</h3>
     <p><strong>Teste:</strong> usa os pedais no ecrã. Quanto mais acima tocares, mais fundo vai o pedal. Com o ponto-morto ligado, o acelerador só sobe as rotações.</p>
     <p><strong>GPS:</strong> usa o GPS deste ecrã. Num telemóvel fixo num suporte, junta o acelerómetro para o som reagir mais depressa.</p>
@@ -365,9 +367,9 @@ function bakeLoop(d,sr){
 class EngineCoreS {
   constructor(sr){
     this.sr=sr; this.e=null; this.sets={}; this.cur=null; this.rpm=0; this.thr=0; this.rpmT=0; this.thrT=0; this.on=false; this.g=0; this.vol=0.8; this.lim=false;
-    this.ctr=0; this.seed=192837465; this.pos=new Float64Array(16);
+    this.ctr=0; this.seed=192837465; this.pos=new Float64Array(16); this.fg=0; this.pendE=null; this.kF=1/(sr*0.03);
     this.kR=1-Math.exp(-1/(sr*0.010)); this.kT=1-Math.exp(-1/(sr*0.015)); this.kG=1-Math.exp(-1/(sr*0.06));
-    this.kGate=1-Math.exp(-1/(sr*0.0015)); this.kPop=Math.exp(-1/(sr*0.006));
+    this.kGate=1-Math.exp(-1/(sr*0.007)); this.kPop=Math.exp(-1/(sr*0.006));
     this.gate=1; this.gateT=1; this.limPh=0; this.lpA=0.5; this.load=0;
     this.ia=0; this.ib=0; this.wa=1; this.wb=0; this.ra=1; this.rb=1;
     this.sp=0; this.whPh=0; this.whF=3000; this.whAmt=0; this.bo=0; this.flPh=0; this.flut=1; this.prevThrT=0;
@@ -377,10 +379,11 @@ class EngineCoreS {
   }
   rnd(){ let s=this.seed; s^=s<<13; s^=s>>>17; s^=s<<5; this.seed=s; return (s>>>0)/2147483648-1; }
   msg(d){
-    if(d.e){ this.e=d.e; this.cur=this.sets[d.e.smp||d.e.id]||null; this.sp=0; this.bo=0; this.pop=0; }
+    if(d.e){ if(this.e&&this.cur&&d.e.id!==this.e.id) this.pendE=d.e; else this.apply(d.e); }
     if(d.rpm!==undefined){ this.rpmT=d.rpm; this.thrT=d.thr; this.lim=!!d.lim; this.on=!!d.on; this.vol=d.vol; }
   }
-  setSamples(id,arr){ this.sets[id]=arr; if(this.e&&(this.e.smp||this.e.id)===id) this.cur=arr; }
+  apply(e){ this.e=e; this.cur=this.sets[e.smp||e.id]||null; this.pos.fill(0); this.sp=0; this.bo=0; this.pop=0; if(this.cur) this.control(); }
+  setSamples(id,arr){ this.sets[id]=arr; if(this.e&&!this.pendE&&(this.e.smp||this.e.id)===id&&this.cur!==arr){ this.cur=arr; this.pos.fill(0); this.fg=0; this.control(); } }
   control(){
     const e=this.e, sr=this.sr, dtc=32/sr, rpm=this.rpm, rn=rpm/e.red, thr=this.thr, K=this.cur.length;
     const f=Math.max(rpm,250)/(e.step||1000); let a=Math.floor(f); if(a<1)a=1; if(a>K)a=K; const b=a<K?a+1:a; let t=f-a; if(t<0)t=0; if(t>1)t=1; if(b===a)t=0;
@@ -390,7 +393,7 @@ class EngineCoreS {
     const fc=1000+14000*Math.pow(0.08+0.92*thr,1.5)*(0.5+0.5*Math.min(1,rn));
     this.lpA=1-Math.exp(-2*Math.PI*Math.min(fc,sr*0.45)/sr);
     this.limPh+=14*dtc; if(this.limPh>=1)this.limPh-=1;
-    this.gateT=(this.lim&&this.limPh<0.5)?0.12:1;
+    this.gateT=(this.lim&&this.limPh<0.5)?0.35:1;
     if(e.turbo){
       const tg=this.thrT*Math.max(0,Math.min(1,(rpm-0.25*e.red)/(0.35*e.red)));
       this.sp+=(tg-this.sp)*(1-Math.exp(-dtc/(tg>this.sp?0.35:0.2)));
@@ -407,19 +410,23 @@ class EngineCoreS {
     }
   }
   process(L,R,N){
-    const e=this.e, cur=this.cur;
-    if(!e||!cur){ for(let i=0;i<N;i++){L[i]=0;R[i]=0;} return; }
+    let e=this.e, cur=this.cur;
+    if(!e||(!cur&&!this.pendE)){ for(let i=0;i<N;i++){L[i]=0;R[i]=0;} return; }
     const pos=this.pos, bc=this.bc, bs=this.bs, sr=this.sr;
     for(let s=0;s<N;s++){
+      // troca de carro: baixa o som em 30 ms, troca, e volta a subir (sem estalo)
+      if(this.pendE){ this.fg-=this.kF; if(this.fg<=0||!cur){ this.fg=0; this.apply(this.pendE); this.pendE=null; e=this.e; cur=this.cur; } }
+      else if(this.fg<1){ this.fg+=this.kF; if(this.fg>1) this.fg=1; }
+      if(!cur){ L[s]=0; R[s]=0; continue; }
       if((this.ctr++&31)===0) this.control();
       this.rpm+=(this.rpmT-this.rpm)*this.kR;
       this.thr+=(this.thrT-this.thr)*this.kT;
       this.g+=((this.on?1:0)-this.g)*this.kG;
       this.gate+=(this.gateT-this.gate)*this.kGate;
       const ia=this.ia, ib=this.ib, A=cur[ia], la=A.length-1;
-      let p=pos[ia], i0=p|0, x=(A[i0]+(A[i0+1]-A[i0])*(p-i0))*this.wa;
-      p+=this.ra; if(p>=la)p-=la; pos[ia]=p;
-      if(ib!==ia){ const B=cur[ib], lb=B.length-1; p=pos[ib]; i0=p|0; x+=(B[i0]+(B[i0+1]-B[i0])*(p-i0))*this.wb; p+=this.rb; if(p>=lb)p-=lb; pos[ib]=p; }
+      let p=pos[ia]; if(p>=la)p%=la; let i0=p|0, x=(A[i0]+(A[i0+1]-A[i0])*(p-i0))*this.wa;
+      p+=this.ra; if(p>=la)p%=la; pos[ia]=p;
+      if(ib!==ia){ const B=cur[ib], lb=B.length-1; p=pos[ib]; if(p>=lb)p%=lb; i0=p|0; x+=(B[i0]+(B[i0+1]-B[i0])*(p-i0))*this.wb; p+=this.rb; if(p>=lb)p%=lb; pos[ib]=p; }
       x*=this.load*this.gate;
       const n1=this.rnd();
       this.pop*=this.kPop; this.popLP+=(n1*this.pop-this.popLP)*0.3; x+=this.popLP*e.pops*0.9;
@@ -430,7 +437,7 @@ class EngineCoreS {
         x+=y*this.bo*this.flut*0.35*e.turbo;
       }
       this.z1+=(x-this.z1)*this.lpA; this.z2+=(this.z1-this.z2)*this.lpA;
-      const out=Math.tanh(this.z2*2.0)*this.vol*this.g;
+      const out=Math.tanh(this.z2*1.35)*1.2*this.vol*this.g*this.fg;
       L[s]=out; R[s]=out;
     }
   }
@@ -452,7 +459,7 @@ class EngineCoreW {
     this.sr=sr; this.e=null; this.rpm=0; this.thr=0; this.rpmT=0; this.thrT=0; this.on=false; this.g=0; this.vol=0.8; this.lim=false;
     this.cyc=0; this.ctr=0; this.seed=987654321;
     this.kR=1-Math.exp(-1/(sr*0.010)); this.kT=1-Math.exp(-1/(sr*0.015)); this.kG=1-Math.exp(-1/(sr*0.06));
-    this.kGate=1-Math.exp(-1/(sr*0.0015)); this.kPop=Math.exp(-1/(sr*0.006)); this.kHs=0.05; this.kB=1-Math.exp(-2*Math.PI*125/sr);
+    this.kGate=1-Math.exp(-1/(sr*0.007)); this.kPop=Math.exp(-1/(sr*0.006)); this.kHs=0.05; this.kB=1-Math.exp(-2*Math.PI*125/sr);
     this.inv120sr=1/(120*sr);
     this.gate=1; this.gateT=1; this.limPh=0; this.jitAmt=0; this.roughAmt=0; this.lpA=0.5;
     this.sp=0; this.whPh=0; this.whF=3000; this.whAmt=0; this.bo=0; this.flPh=0; this.flut=1; this.prevThrT=0;
@@ -501,7 +508,7 @@ class EngineCoreW {
     const fc=e.wg.lp[0]+(e.wg.lp[1]-e.wg.lp[0])*(0.2+0.8*thr)*(0.45+0.55*Math.min(1,rn));
     this.lpA=1-Math.exp(-2*Math.PI*Math.min(fc,sr*0.45)/sr);
     this.limPh+=14*dtc; if(this.limPh>=1)this.limPh-=1;
-    this.gateT=(this.lim&&this.limPh<0.5)?0.05:1;
+    this.gateT=(this.lim&&this.limPh<0.5)?0.3:1;
     if(e.turbo){
       const tg=this.thrT*Math.max(0,Math.min(1,(this.rpm-0.25*e.red)/(0.35*e.red)));
       this.sp+=(tg-this.sp)*(1-Math.exp(-dtc/(tg>this.sp?0.35:0.2)));
@@ -626,10 +633,14 @@ const $=id=>document.getElementById(id);
 const clamp=(x,a,b)=>x<a?a:x>b?b:x;
 const store={get(k,d){try{const v=localStorage.getItem('revlab.'+k);return v===null?d:v;}catch(_){return d;}},set(k,v){try{localStorage.setItem('revlab.'+k,v);}catch(_){}}};
 
-const S={autoAt:0,autoDelay:0,model:'s',on:false,mode:'teste',eng:0,v:0,a:0,rpm:0,gear:1,gas:0,brake:0,neutral:false,lim:false,lastShift:0,cutUntil:0,blipUntil:0,thrEst:0,vol:0.8};
+const S={pops:false,autoAt:0,autoDelay:0,model:'s',on:false,mode:'teste',eng:0,v:0,a:0,rpm:0,gear:1,gas:0,brake:0,neutral:false,lim:false,lastShift:0,cutUntil:0,blipUntil:0,thrEst:0,vol:0.8};
 
 /* ---------- Áudio ---------- */
-const Snd={ctx:null,core:null,sp:null,peak:0,el:null,
+// O som é gerado numa linha de áudio própria (AudioWorklet), para não estalar quando o ecrã está ocupado. Arranca no modo simples e muda logo que possível.
+const WORKLET_SRC="registerProcessor('revlab',class extends AudioWorkletProcessor{constructor(){super();this.s=new EngineCoreS(sampleRate);this.w=new EngineCoreW(sampleRate);this.model='s';this.n=0;this.pk=0;"+
+ "this.port.onmessage=ev=>{const d=ev.data;if(d.model)this.model=d.model;if(d.set)this.s.setSamples(d.set,d.arr);if(d.e||d.rpm!==undefined){this.s.msg(d);this.w.msg(d);}};}"+
+ "process(i,o){const c=o[0],L=c[0],R=c[1]||c[0];(this.model==='w'?this.w:this.s).process(L,R,L.length);let pk=this.pk;for(let k=0;k<L.length;k+=8){const v=L[k]<0?-L[k]:L[k];if(v>pk)pk=v;}this.pk=pk;if(++this.n>=40){this.port.postMessage({pk:pk});this.n=0;this.pk=0;}return true;}});";
+const Snd={ctx:null,cores:null,core:null,sp:null,node:null,peak:0,el:null,sets:{},done:{},busy:{},thread:'',last:null,
   // Tudo síncrono dentro do toque: os browsers móveis só libertam o som assim.
   start(){
     try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(_){}
@@ -637,15 +648,33 @@ const Snd={ctx:null,core:null,sp:null,peak:0,el:null,
     if(!this.ctx){
       const AC=window.AudioContext||window.webkitAudioContext;
       if(!AC) throw new Error('sem áudio web');
-      this.ctx=new AC();
-      this.cores={s:new EngineCoreS(this.ctx.sampleRate),w:new EngineCoreW(this.ctx.sampleRate)}; this.core=this.cores.w;
-      this.cores.s.msg({e:ENGINES[S.eng]}); this.cores.w.msg({e:ENGINES[S.eng]}); this.load(ENGINES[S.eng].smp||ENGINES[S.eng].id);
-      const sp=this.ctx.createScriptProcessor(1024,0,2);
+      this.ctx=new AC(); const sr=this.ctx.sampleRate;
+      this.cores={s:new EngineCoreS(sr),w:new EngineCoreW(sr)}; this.core=this.cores.s;
+      const e=this.eng(ENGINES[S.eng]); this.cores.s.msg({e:e}); this.cores.w.msg({e:e});
+      const sp=this.ctx.createScriptProcessor(2048,0,2);
       sp.onaudioprocess=ev=>{ const b=ev.outputBuffer, L=b.getChannelData(0), R=b.numberOfChannels>1?b.getChannelData(1):L;
-        const c=(S.model==='s'&&this.cores.s.cur)?this.cores.s:this.cores.w; this.core=c; c.process(L,R,b.length); let pk=0; for(let i=0;i<L.length;i+=8){ const v=L[i]<0?-L[i]:L[i]; if(v>pk)pk=v; } this.peak=pk; this.blocks=(this.blocks||0)+1; };
-      sp.connect(this.ctx.destination); this.sp=sp;
+        (S.model==='w'?this.cores.w:this.cores.s).process(L,R,b.length); let pk=0; for(let i=0;i<L.length;i+=8){ const v=L[i]<0?-L[i]:L[i]; if(v>pk)pk=v; } this.peak=pk; };
+      sp.connect(this.ctx.destination); this.sp=sp; this.thread='simples';
+      this.preload(); this.upgrade();
     }
     this.kick();
+  },
+  eng(e){ return S.pops?e:Object.assign({},e,{pops:0}); },
+  upgrade(){
+    const ctx=this.ctx; if(!ctx.audioWorklet||!window.AudioWorkletNode) return;
+    try{
+      const url=URL.createObjectURL(new Blob([WG.toString()+';'+EngineCoreW.toString()+';'+EngineCoreS.toString()+';'+WORKLET_SRC],{type:'application/javascript'}));
+      ctx.audioWorklet.addModule(url).then(()=>{
+        const node=new AudioWorkletNode(ctx,'revlab',{numberOfInputs:0,numberOfOutputs:1,outputChannelCount:[2]});
+        node.port.onmessage=ev=>{ if(ev.data&&ev.data.pk!==undefined) this.peak=ev.data.pk; };
+        node.port.postMessage({e:this.eng(ENGINES[S.eng]),model:S.model});
+        Object.keys(this.sets).forEach(id=>node.port.postMessage({set:id,arr:this.sets[id]}));
+        if(this.last) node.port.postMessage(this.last);
+        node.connect(ctx.destination);
+        try{ this.sp.disconnect(); this.sp.onaudioprocess=null; }catch(_){}
+        this.sp=null; this.node=node; this.thread='dedicado';
+      }).catch(()=>{});
+    }catch(_){}
   },
   kick(){ try{ if(this.ctx&&this.ctx.state!=='running'){ const p=this.ctx.resume(); if(p&&p.catch)p.catch(()=>{}); } }catch(_){}
     try{ if(this.el&&this.el.paused){ const p=this.el.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(_){} },
@@ -662,16 +691,27 @@ const Snd={ctx:null,core:null,sp:null,peak:0,el:null,
       this.el=el;
     }catch(_){}
   },
-  info(){ if(!this.ctx) return 'Áudio: ainda não iniciado'; const id=ENGINES[S.eng].smp||ENGINES[S.eng].id, k=S.model==='w'?'sintetizado':this.done[id]?'gravado':this.fail?'gravação falhou, a usar sintetizado':'a carregar gravação';
-    return 'Áudio: '+this.ctx.state+' · '+this.ctx.sampleRate+' Hz · som '+k+' · nível '+this.peak.toFixed(2); },
-  send(m){ if(this.cores){ this.cores.s.msg(m); this.cores.w.msg(m); if(m.e) this.load(m.e.smp||m.e.id); } },
-  setModel(k){ S.model=k; },
-  done:{}, busy:{},
-  load(id){
-    if(this.done[id]||this.busy[id]||!this.ctx||!SMP[id]) return; this.busy[id]=true;
+  info(){ if(!this.ctx) return 'Áudio: ainda não iniciado'; const id=ENGINES[S.eng].smp||ENGINES[S.eng].id, k=S.model==='w'?'sintetizado':this.done[id]?'gravado':this.fail?'gravação falhou':'a carregar gravação';
+    return 'Áudio: '+this.ctx.state+' · '+this.ctx.sampleRate+' Hz · som '+k+' · modo '+this.thread+' · nível '+this.peak.toFixed(2); },
+  send(m){
+    if(!this.cores) return;
+    if(m.e){ this.load(m.e.smp||m.e.id); m={e:this.eng(m.e)}; } else this.last=m;
+    if(this.node) this.node.port.postMessage(m); else { this.cores.s.msg(m); this.cores.w.msg(m); }
+  },
+  setModel(k){ S.model=k; if(this.node) this.node.port.postMessage({model:k}); },
+  // Carrega primeiro o carro escolhido e depois os restantes, um de cada vez, para a troca de carro ser imediata.
+  preload(){ const ids=[]; ENGINES.forEach(e=>{ const id=e.smp||e.id; if(ids.indexOf(id)<0) ids.push(id); });
+    const cur=ENGINES[S.eng].smp||ENGINES[S.eng].id; ids.sort((a,b)=>(a===cur?-1:0)-(b===cur?-1:0));
+    const next=()=>{ const id=ids.shift(); if(id) this.load(id,next); }; next(); },
+  load(id,cb){
+    if(this.done[id]||!this.ctx||!SMP[id]){ if(cb) cb(); return; }
+    if(this.busy[id]){ if(cb) setTimeout(()=>this.load(id,cb),300); return; }
+    this.busy[id]=true;
     const list=SMP[id], out=new Array(list.length); let left=list.length;
     const fin=(i,buf)=>{ try{ out[i]=buf?bakeLoop(buf.getChannelData(0),buf.sampleRate):null; }catch(_){ out[i]=null; }
-      if(--left===0){ this.busy[id]=false; if(out.every(Boolean)){ this.done[id]=true; this.cores.s.setSamples(id,out); } else this.fail=true; } };
+      if(--left===0){ this.busy[id]=false;
+        if(out.every(Boolean)){ this.done[id]=true; this.sets[id]=out; this.cores.s.setSamples(id,out); if(this.node) this.node.port.postMessage({set:id,arr:out}); } else this.fail=true;
+        if(cb) cb(); } };
     list.forEach((b64,i)=>{ let called=false; const once=buf=>{ if(called)return; called=true; fin(i,buf); };
       try{ const bin=atob(b64), u=new Uint8Array(bin.length); for(let j=0;j<bin.length;j++) u[j]=bin.charCodeAt(j);
         const pr=this.ctx.decodeAudioData(u.buffer,b=>once(b),()=>once(null)); if(pr&&pr.catch) pr.catch(()=>once(null)); }catch(_){ once(null); } });
@@ -1123,6 +1163,9 @@ function pickUser(u){
 [...document.querySelectorAll('.whoBtn')].forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); pickUser(b.dataset.u); });
 $('hello').addEventListener('click',()=>{ if($('hello').classList.contains('go')){ clearTimeout(helloT); $('hello').hidden=true; } });
 $('swapUser').onclick=()=>{ $('settings').hidden=true; askUser(); };
+function setPops(v){ S.pops=v; store.set('pops',v?'1':'0'); $('popsBtn').textContent=v?'Ligados':'Desligados'; $('popsBtn').classList.toggle('sel',v); Snd.send({e:ENGINES[S.eng]}); }
+$('popsBtn').onclick=()=>setPops(!S.pops);
+setPops(store.get('pops','0')==='1');
 $('openSet').onclick=()=>{ renderLog(); $('settings').hidden=false; };
 { let armed=0; $('logClear').onclick=()=>{ const b=$('logClear'); if(Date.now()<armed){ try{ localStorage.removeItem('revlab.log'); }catch(_){} if(Log.cur){ Log.cur.t=Date.now(); Log.cur.d=0; } armed=0; b.textContent='Apagar histórico'; renderLog(); }
   else { armed=Date.now()+4000; b.textContent='Toca outra vez para apagar tudo (não dá para recuperar)'; setTimeout(()=>{ if(armed&&Date.now()>=armed){ armed=0; b.textContent='Apagar histórico'; } },4100); } }; }
