@@ -149,7 +149,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
 .helloIn{text-align:center;max-width:100%}
 .hello p{margin:0;font-family:var(--font-display);text-transform:uppercase;line-height:.95;opacity:0;animation:helloUp .6s cubic-bezier(.2,.8,.2,1) forwards}
 .helloA{font-weight:800;font-style:italic;font-size:clamp(26px,5.5vw,56px);color:var(--accent);letter-spacing:.04em}
-.helloB{font-weight:900;font-size:clamp(40px,9vw,112px);animation-delay:.28s!important;text-wrap:balance}
+.helloB{font-weight:900;font-size:clamp(44px,10.5vw,128px);animation-delay:.28s!important;text-wrap:balance}
 .helloLine{display:block;height:5px;width:0;margin:18px auto 0;border-radius:99px;background:var(--accent);box-shadow:0 0 18px var(--accent);animation:helloRev 1.5s cubic-bezier(.5,0,.2,1) .7s forwards}
 @keyframes helloUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 @keyframes helloRev{to{width:min(70vw,620px)}}
@@ -209,7 +209,7 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
 <div class="app">
   <header>
     <div class="brand">Rev<b>Lab</b></div>
-    <div class="greet">Olá Felisberto, <b>que motor acordamos hoje?</b></div>
+    <div class="greet">Olá Felisberto, <b>que carro é hoje?</b></div>
     <div class="seg" id="modes">
       <button type="button" data-m="teste"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/></svg>Teste</button>
       <button type="button" data-m="gps"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>GPS</button>
@@ -291,7 +291,7 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
 <div class="hello" id="hello" role="status">
   <div class="helloIn">
     <p class="helloA">Olá Felisberto,</p>
-    <p class="helloB">que motor acordamos hoje?</p>
+    <p class="helloB">que carro é hoje?</p>
     <i class="helloLine"></i>
   </div>
 </div>
