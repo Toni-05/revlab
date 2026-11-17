@@ -140,6 +140,21 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
 .pedal u{position:absolute;right:10px;bottom:8px;text-decoration:none;font-family:var(--font-display);font-weight:800;font-size:18px;pointer-events:none;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px #000}
 .hint{margin:0;color:var(--muted);font-size:12.5px}
 
+/* Saudação */
+.brand{margin-right:0}
+.greet{margin-right:auto;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding-left:10px;border-left:1px solid var(--line)}
+.greet b{color:var(--text);font-weight:600}
+.hello{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;cursor:pointer;
+  background:radial-gradient(70% 60% at 50% 55%,rgba(var(--accent-rgb),.32),rgba(var(--accent-rgb),0) 70%),#07090d;animation:helloOut .55s ease 2.7s forwards}
+.helloIn{text-align:center;max-width:100%}
+.hello p{margin:0;font-family:var(--font-display);text-transform:uppercase;line-height:.95;opacity:0;animation:helloUp .6s cubic-bezier(.2,.8,.2,1) forwards}
+.helloA{font-weight:800;font-style:italic;font-size:clamp(26px,5.5vw,56px);color:var(--accent);letter-spacing:.04em}
+.helloB{font-weight:900;font-size:clamp(40px,9vw,112px);animation-delay:.28s!important;text-wrap:balance}
+.helloLine{display:block;height:5px;width:0;margin:18px auto 0;border-radius:99px;background:var(--accent);box-shadow:0 0 18px var(--accent);animation:helloRev 1.5s cubic-bezier(.5,0,.2,1) .7s forwards}
+@keyframes helloUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes helloRev{to{width:min(70vw,620px)}}
+@keyframes helloOut{to{opacity:0;visibility:hidden}}
+
 /* Definições */
 .modal{position:fixed;inset:0;z-index:50;background:rgba(4,6,9,.72);display:flex;align-items:center;justify-content:center;padding:14px}
 .sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;max-width:560px;max-height:100%;overflow:auto}
@@ -186,13 +201,15 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
   .thumb span{display:none}
 }
 @media (min-width:700px) and (max-width:920px){ .iconbtn span{display:none} .iconbtn{padding:8px 10px} }
-@media (prefers-reduced-motion:reduce){.start{animation:none}.car.swap .photo{animation:none}}
+@media (max-width:1150px){ .greet{display:none} .brand{margin-right:auto} }
+@media (prefers-reduced-motion:reduce){.hello p{animation:none;opacity:1}.helloLine{animation:none;width:min(70vw,620px)}.start{animation:none}.car.swap .photo{animation:none}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">Rev<b>Lab</b></div>
+    <div class="greet">Olá Felisberto, <b>que motor acordamos hoje?</b></div>
     <div class="seg" id="modes">
       <button type="button" data-m="teste"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/></svg>Teste</button>
       <button type="button" data-m="gps"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>GPS</button>
@@ -269,6 +286,14 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
       <div class="pedal gas" id="gas" tabindex="0" role="button" aria-label="Acelerador"><div class="fill"></div><span>Acelerador</span><u></u></div>
     </section>
   </main>
+</div>
+
+<div class="hello" id="hello" role="status">
+  <div class="helloIn">
+    <p class="helloA">Olá Felisberto,</p>
+    <p class="helloB">que motor acordamos hoje?</p>
+    <i class="helloLine"></i>
+  </div>
 </div>
 
 <div class="modal" id="settings" hidden>
@@ -1009,6 +1034,7 @@ document.addEventListener('contextmenu',ev=>{ if(ev.target.closest('.pedal')) ev
 function setModel(k){ Snd.setModel(k); store.set('model2',k); [...$('models').querySelectorAll('button')].forEach(b=>b.classList.toggle('sel',b.dataset.k===k)); }
 [...$('models').querySelectorAll('button')].forEach(b=>b.onclick=()=>setModel(b.dataset.k));
 setModel(store.get('model2','s')==='w'?'w':'s');
+{ const h=$('hello'), bye=()=>{ if(h.parentNode) h.remove(); }; h.addEventListener('click',bye); setTimeout(bye,3400); }
 $('openSet').onclick=()=>{ $('settings').hidden=false; };
 $('closeSet').onclick=()=>{ $('settings').hidden=true; };
 $('settings').addEventListener('click',ev=>{ if(ev.target===$('settings')) $('settings').hidden=true; });
