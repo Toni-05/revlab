@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* Garagem + painel: o carro é o palco, o resto fica discreto. Cor de destaque muda com o motor. Tema único escuro, por escolha. */
+/* Um só ecrã em tablet e no carro: carro à esquerda, instrumentos e pedais à direita; definições numa janela à parte. No telemóvel a página corre na vertical. Tema único escuro, por escolha. */
 :root{
   color-scheme: dark;
   --bg:#090c11;
@@ -22,248 +22,273 @@
   --ok:#3ddc84;
   --font-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
   --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ts:400px;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;overflow-x:hidden}
 body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.4;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 button{font-family:inherit;color:inherit}
-.app{max-width:1280px;margin:0 auto;padding:12px 16px 24px;display:flex;flex-direction:column;gap:12px;min-height:100%}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font-family:var(--font-display);font-weight:900;font-size:28px;letter-spacing:.02em;text-transform:uppercase;line-height:1;font-style:italic}
+.app{max-width:1400px;margin:0 auto;padding:10px 14px 16px;display:flex;flex-direction:column;gap:10px;min-height:100%}
+header{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font-family:var(--font-display);font-weight:900;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1;font-style:italic;margin-right:auto}
 .brand b{color:var(--accent);transition:color .4s}
-.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;text-align:right;background:var(--panel);border:1px solid var(--line);padding:6px 10px;border-radius:99px}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12.5px;background:var(--panel);border:1px solid var(--line);padding:6px 10px;border-radius:99px;white-space:nowrap}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
 .status.on .dot{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+.iconbtn{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.iconbtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;order:5;width:100%}
+.seg button{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
+.seg svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.seg button.sel{color:var(--text);border-color:var(--accent);background:rgba(var(--accent-rgb),.12)}
+.seg button.sel svg{stroke:var(--accent)}
+.infobar{font-size:13px;color:var(--muted)}
+.panel{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.panel p{margin:0}
+.panel strong{color:var(--text);font-weight:600}
+#p-teste{display:none}
+.code{font-family:var(--font-display);font-size:30px;font-weight:900;letter-spacing:.1em;color:var(--accent);line-height:1}
+.panel input[type=text]{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:.12em;width:110px;padding:5px 8px;border-radius:9px;border:1px solid var(--line);background:#0c1016;color:var(--text);-webkit-user-select:text;user-select:text}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn.sel{border-color:var(--accent);background:rgba(var(--accent-rgb),.12)}
+.msg{color:var(--text)}.msg.bad{color:var(--red)}.msg.good{color:var(--ok)}
 
-main{display:flex;flex-direction:column;gap:12px}
-.colA,.colB{display:contents}
-.stage{order:1}.cluster{order:2}.pedals{order:3}.source{order:4}.audio{order:5}
-@media (min-width:900px){
-  main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
-  .colA,.colB{display:flex;flex-direction:column;gap:12px;min-width:0}
-}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:14px;min-width:0}
+main{display:flex;flex-direction:column;gap:10px;flex:1;min-height:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:12px;min-width:0}
 
 /* Palco */
-.stage{position:relative;overflow:hidden;padding:16px 14px 12px;
-  background:radial-gradient(120% 90% at 50% 62%,rgba(var(--accent-rgb),.20),rgba(var(--accent-rgb),0) 62%),linear-gradient(180deg,#141922,#0d1117);transition:background .4s}
+.stage{position:relative;overflow:hidden;display:flex;flex-direction:column;
+  background:radial-gradient(120% 90% at 50% 55%,rgba(var(--accent-rgb),.20),rgba(var(--accent-rgb),0) 62%),linear-gradient(180deg,#141922,#0d1117);transition:background .4s}
 .stageTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.kicker{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);transition:color .4s}
-h1{margin:2px 0 0;font-family:var(--font-display);font-weight:900;font-size:clamp(32px,9.5vw,56px);line-height:.92;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
-.count{font-family:var(--font-display);font-weight:600;font-size:18px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.count b{color:var(--text);font-weight:800;font-size:26px}
-.carArea{position:relative;margin:10px -14px 0;touch-action:pan-y}
-.car{width:100%;margin:0 auto;display:block}
-.car svg{width:80%;max-width:540px;margin:0 auto}
+.kicker{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);transition:color .4s}
+h1{margin:2px 0 0;font-family:var(--font-display);font-weight:900;font-size:clamp(30px,9vw,52px);line-height:.92;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.count{font-family:var(--font-display);font-weight:600;font-size:17px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.count b{color:var(--text);font-weight:800;font-size:24px}
+.carArea{position:relative;margin:6px -12px 0;touch-action:pan-y}
+.car{width:100%;display:block}
+.car svg{width:80%;max-width:540px;margin:0 auto;height:auto;display:block;overflow:visible}
 .photo{position:relative;aspect-ratio:2/1;overflow:hidden;
-  background:radial-gradient(60% 55% at 50% 58%,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),0) 70%),linear-gradient(180deg,rgba(255,255,255,0) 62%,rgba(255,255,255,.05) 62.3%,rgba(255,255,255,0) 100%)}
+  background:radial-gradient(60% 55% at 50% 58%,rgba(var(--accent-rgb),.28),rgba(var(--accent-rgb),0) 70%)}
 .photo .fg{position:absolute;left:12%;right:12%;bottom:12%;width:76%;height:80%;object-fit:contain;object-position:50% 100%;display:block;filter:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
 .photo .shadow{position:absolute;left:15%;right:15%;bottom:8.5%;height:7%;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.75),rgba(0,0,0,0))}
-.car.swap .photo{animation:carIn .38s cubic-bezier(.2,.8,.2,1)}
-.credit{margin:5px 2px 0;font-size:11px;color:var(--muted)}
-.credit a{color:var(--muted)}
-.thumb img{width:100%;aspect-ratio:2/1;object-fit:contain;display:block;margin-bottom:4px}
-.car svg{width:100%;height:auto;display:block;overflow:visible}
-.car.swap svg{animation:carIn .38s cubic-bezier(.2,.8,.2,1)}
+.car.swap .photo,.car.swap svg{animation:carIn .38s cubic-bezier(.2,.8,.2,1)}
 @keyframes carIn{from{transform:translateX(46px);opacity:0}to{transform:none;opacity:1}}
-.road{position:absolute;left:0;right:0;bottom:3.5%;height:3px;opacity:.5;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 42px,transparent 42px 110px)}
+.road{position:absolute;left:0;right:0;bottom:3.5%;height:3px;opacity:.5;background:repeating-linear-gradient(90deg,rgba(255,255,255,.55) 0 42px,transparent 42px 110px)}
 .nav{position:absolute;top:calc(50% - 19px);width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:rgba(9,12,17,.7);font-size:22px;line-height:1;cursor:pointer;z-index:2}
 .nav.prev{left:8px}.nav.next{right:8px}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
-.stats div{background:rgba(9,12,17,.55);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
-.stats b{display:block;font-family:var(--font-display);font-weight:800;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
-.stats span{font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
-.desc.note{font-size:12px;margin-top:4px;opacity:.8}
-.desc{margin:10px 2px 0;color:var(--muted);font-size:13.5px}
-.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:12px 0 0}
-.thumbs::-webkit-scrollbar{display:none}
-.thumb{min-width:0;background:rgba(9,12,17,.55);border:1px solid var(--line);border-radius:12px;padding:6px 6px 7px;cursor:pointer;text-align:center}
+.credit{margin:3px 2px 0;font-size:10.5px;color:var(--muted)}
+.credit a,.diag a{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.stats div{background:rgba(9,12,17,.55);border:1px solid var(--line);border-radius:10px;padding:5px 9px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.stats b{font-family:var(--font-display);font-weight:800;font-size:21px;line-height:1;font-variant-numeric:tabular-nums}
+.stats span{font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.desc{margin:7px 2px 0;color:var(--muted);font-size:13px}
+.desc.note{font-size:11px;margin-top:3px;opacity:.8}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin:8px 0 0}
+.thumb{min-width:0;background:rgba(9,12,17,.55);border:1px solid var(--line);border-radius:10px;padding:4px 4px 5px;cursor:pointer;text-align:center}
+.thumb img{width:100%;aspect-ratio:2/1;object-fit:contain;display:block;margin-bottom:2px}
 .thumb svg{width:100%;height:auto;display:block}
-.thumb span{display:block;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
-.thumb.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent),0 0 18px rgba(var(--accent-rgb),.25)}
+.thumb span{display:block;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.thumb.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent),0 0 16px rgba(var(--accent-rgb),.25)}
 .thumb.sel span{color:var(--text)}
 
-/* Painel de instrumentos */
-.cluster{display:flex;flex-direction:column;align-items:center;gap:8px}
-.leds{display:flex;gap:5px;width:100%;max-width:430px}
-.leds i{flex:1;height:8px;border-radius:99px;background:#1f2530}
+/* Instrumentos */
+.cluster{display:flex;flex-direction:column;align-items:center;gap:6px}
+.leds{display:flex;gap:5px;width:100%;max-width:430px;flex:none}
+.leds i{flex:1;height:7px;border-radius:99px;background:#1f2530}
 .leds i.g.lit{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .leds i.a.lit{background:#ffb020;box-shadow:0 0 8px #ffb020}
 .leds i.r.lit{background:var(--red);box-shadow:0 0 10px var(--red)}
 .tachWrap{position:relative;width:100%;max-width:430px;aspect-ratio:1/0.92}
 canvas{position:absolute;inset:0;width:100%;height:100%}
 .readout{position:absolute;left:0;right:0;top:25%;text-align:center;pointer-events:none;font-family:var(--font-display);font-variant-numeric:tabular-nums}
-.gear{font-size:92px;font-weight:900;line-height:.85;font-style:italic}
+.gear{font-size:calc(var(--ts)*.215);font-weight:900;line-height:.85;font-style:italic}
 .gear.lim{color:var(--red)}
-.speed{font-size:38px;font-weight:800;line-height:1.05}
-.speed small{font-size:13px;color:var(--muted);margin-left:5px;font-family:var(--font-body);font-weight:500}
-.rpmTxt{font-size:13px;color:var(--muted);font-family:var(--font-body)}
-.start{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:84px;height:84px;border-radius:50%;cursor:pointer;
+.speed{font-size:calc(var(--ts)*.09);font-weight:800;line-height:1.05}
+.speed small{font-size:max(10px,calc(var(--ts)*.03));color:var(--muted);margin-left:5px;font-family:var(--font-body);font-weight:500}
+.rpmTxt{font-size:max(10px,calc(var(--ts)*.03));color:var(--muted);font-family:var(--font-body)}
+.start{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:max(62px,calc(var(--ts)*.2));height:max(62px,calc(var(--ts)*.2));border-radius:50%;cursor:pointer;
   border:2px solid var(--accent);background:radial-gradient(circle at 50% 35%,#2a313d,#11151b 70%);
-  box-shadow:0 0 0 5px rgba(var(--accent-rgb),.12),0 6px 18px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  animation:pulse 1.8s ease-in-out infinite}
-.start b{font-family:var(--font-display);font-weight:900;font-size:19px;letter-spacing:.06em;line-height:1}
-.start small{font-size:9.5px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+  box-shadow:0 0 0 5px rgba(var(--accent-rgb),.12),0 6px 18px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;animation:pulse 1.8s ease-in-out infinite}
+.start b{font-family:var(--font-display);font-weight:900;font-size:max(15px,calc(var(--ts)*.046));letter-spacing:.06em;line-height:1}
+.start small{font-size:9px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
 .start.on{animation:none;border-color:var(--red);box-shadow:0 0 0 5px rgba(255,61,51,.14),0 0 22px rgba(255,61,51,.35)}
 .start:active{transform:translateX(-50%) scale(.95)}
 @keyframes pulse{50%{box-shadow:0 0 0 11px rgba(var(--accent-rgb),.05),0 6px 18px rgba(0,0,0,.6)}}
 
 /* Pedais */
-.pedals{display:grid;grid-template-columns:1fr 1.25fr;gap:10px}
-.pedals.solo{grid-template-columns:1fr}
-.pedals .toggle,.pedals .hint,.pedals .boom,.pedals .delay{grid-column:1/-1}
-.delay{display:flex;align-items:center;gap:6px}
-.delay span{font-size:13px;color:var(--muted);margin-right:auto}
-.delay .btn{padding:8px 11px;min-width:48px}
-.delay .btn.sel{border-color:var(--accent);background:rgba(var(--accent-rgb),.12)}
-.boom{font-size:13.5px;color:var(--muted)}
-.boom summary{cursor:pointer;padding:6px 2px;color:var(--text);font-weight:600}
-.boom p{margin:4px 2px}
-.toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:600;cursor:pointer}
-.toggle i{font-style:normal;font-family:var(--font-display);font-weight:800;font-size:17px;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:#0c1016;border:1px solid var(--line);color:var(--muted)}
-.toggle em{font-style:normal;font-size:12.5px;font-weight:500;color:var(--muted);margin-left:auto}
+.pedals{display:grid;grid-template-columns:1fr 1.25fr;gap:8px}
+.pedals.solo .gas,.pedals.solo #auto,.pedals .hint,.pedals .delay{grid-column:1/-1}
+.toggle{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;column-gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:14px;font-weight:600;cursor:pointer;min-width:0;text-align:left}
+.toggle i{grid-row:1/3;font-style:normal;font-family:var(--font-display);font-weight:800;font-size:16px;width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;background:#0c1016;border:1px solid var(--line);color:var(--muted)}
+.toggle span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.15}
+.toggle em{font-style:normal;font-size:11.5px;font-weight:500;color:var(--muted);white-space:nowrap;line-height:1.15}
 .toggle.sel{border-color:var(--accent)}
 .toggle.sel i{background:var(--accent);color:#0b0d10;border-color:var(--accent)}
 .toggle.sel em{color:var(--accent)}
-.pedal{position:relative;height:150px;border-radius:14px;border:1px solid var(--line);overflow:hidden;touch-action:none;cursor:pointer;
+.delay{display:flex;align-items:center;gap:6px}
+.delay span{font-size:13px;color:var(--muted);margin-right:auto}
+.delay .btn{padding:7px 10px;min-width:46px}
+.pedal{position:relative;height:130px;border-radius:14px;border:1px solid var(--line);overflow:hidden;touch-action:none;cursor:pointer;
   background:repeating-linear-gradient(180deg,#1b212b 0 10px,#12161d 10px 20px)}
 .pedal .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(180deg,rgba(var(--accent-rgb),.95),rgba(var(--accent-rgb),.55));mix-blend-mode:screen}
 .pedal.brake .fill{background:linear-gradient(180deg,rgba(255,61,51,.95),rgba(255,61,51,.55))}
-.pedal span{position:absolute;left:10px;bottom:9px;font-family:var(--font-display);font-weight:800;font-size:19px;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;text-shadow:0 1px 6px #000}
-.pedal u{position:absolute;right:10px;bottom:9px;text-decoration:none;font-family:var(--font-display);font-weight:800;font-size:19px;pointer-events:none;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px #000}
-.hint{margin:0;color:var(--muted);font-size:13px}
+.pedal span{position:absolute;left:10px;bottom:8px;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;text-shadow:0 1px 6px #000}
+.pedal u{position:absolute;right:10px;bottom:8px;text-decoration:none;font-family:var(--font-display);font-weight:800;font-size:18px;pointer-events:none;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px #000}
+.hint{margin:0;color:var(--muted);font-size:12.5px}
 
-/* Fonte de velocidade */
-h2{margin:0 0 10px;font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.seg button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 2px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted)}
-.seg svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.seg button.sel{color:var(--text);border-color:var(--accent);background:rgba(var(--accent-rgb),.12)}
-.seg button.sel svg{stroke:var(--accent)}
-.panel{margin-top:12px;color:var(--muted);font-size:13.5px}
-.panel p{margin:0 0 8px}
-.panel .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-.panel strong{color:var(--text);font-weight:600}
-.code{font-family:var(--font-display);font-size:48px;font-weight:900;letter-spacing:.1em;color:var(--accent);line-height:1}
-.panel input[type=text]{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:.12em;width:140px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0c1016;color:var(--text);-webkit-user-select:text;user-select:text}
-.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer}
-.msg{color:var(--text)}.msg.bad{color:var(--red)}.msg.good{color:var(--ok)}
+/* Definições */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(4,6,9,.72);display:flex;align-items:center;justify-content:center;padding:14px}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;max-width:560px;max-height:100%;overflow:auto}
+.sheetTop{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sheet h2{margin:0;font-family:var(--font-display);font-weight:900;font-size:26px;text-transform:uppercase}
+.sheet h3{margin:16px 0 6px;font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.sheet p{margin:0 0 6px;font-size:13.5px;color:var(--muted)}
+.sheet p strong{color:var(--text)}
 .volrow{display:flex;align-items:center;gap:12px}
-.volrow label{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
 input[type=range]{flex:1;accent-color:var(--accent);height:28px}
-.models{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
-.models span{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-right:auto}
-.models .btn.sel{border-color:var(--accent);background:rgba(var(--accent-rgb),.12)}
-.diag a{color:var(--muted)}
-.diag{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.models{display:flex;gap:8px;flex-wrap:wrap}
+.diag{margin:6px 0 0;font-size:12px;color:var(--muted)}
 button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){.start{animation:none}.car.swap svg{animation:none}}
+
+/* Tablet e ecrã do carro: tudo num só ecrã, sem deslocar a página */
+@media (min-width:700px) and (min-height:480px){
+  html,body{overflow:hidden}
+  .app{height:100%;min-height:0;padding:8px 12px 10px;gap:8px}
+  .seg{order:0;width:auto;grid-template-columns:repeat(4,auto)}
+  .seg button{padding:7px 11px}
+  header{flex-wrap:nowrap}
+  .status{min-width:0;overflow:hidden}
+  .status span:last-child{overflow:hidden;text-overflow:ellipsis}
+  main{display:grid;gap:8px;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,auto);grid-template-areas:"stage stage" "cluster pedals"}
+  .stage{grid-area:stage;min-height:0}
+  .cluster{grid-area:cluster;min-height:0}
+  .pedals{grid-area:pedals;min-height:0;align-content:end}
+  .carArea{flex:1;min-height:90px}
+  .car,.photo{height:100%}
+  .photo{aspect-ratio:auto}
+  h1{font-size:clamp(26px,min(4.6vw,6.2vh),56px)}
+  .thumbs{grid-template-columns:repeat(10,minmax(0,1fr))}
+  .tachWrap{flex:1;min-height:0;width:auto;max-width:100%;height:auto}
+  .pedal{height:clamp(84px,17vh,170px)}
+}
+@media (min-width:700px) and (min-height:480px) and (min-aspect-ratio:11/10){
+  main{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"stage cluster" "stage pedals"}
+  .thumbs{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
+@media (min-width:700px) and (min-height:480px) and (max-height:700px){
+  .desc:not(.note){display:none}
+  .card{padding:9px}
+  .thumb span{display:none}
+}
+@media (min-width:700px) and (max-width:920px){ .iconbtn span{display:none} .iconbtn{padding:8px 10px} }
+@media (prefers-reduced-motion:reduce){.start{animation:none}.car.swap .photo{animation:none}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">Rev<b>Lab</b></div>
+    <div class="seg" id="modes">
+      <button type="button" data-m="teste"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/></svg>Teste</button>
+      <button type="button" data-m="gps"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>GPS</button>
+      <button type="button" data-m="ligado"><svg viewBox="0 0 24 24"><path d="M5 13a10 10 0 0 1 14 0M8 16a6 6 0 0 1 8 0"/><circle cx="12" cy="19" r="1.2"/><path d="M12 3v6m-2.5-2.5L12 9l2.5-2.5"/></svg>Receber</button>
+      <button type="button" data-m="sensor"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/><path d="M20 9v6M4 9v6"/></svg>Sensor</button>
+    </div>
     <div class="status" id="status"><span class="dot"></span><span id="statusTxt">Motor desligado</span></div>
+    <button class="iconbtn" id="openSet" type="button" aria-label="Definições"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Definições</span></button>
   </header>
+
+  <div class="infobar">
+    <div class="panel" id="p-teste"></div>
+    <div class="panel" id="p-gps" hidden>
+      <p class="msg" id="gpsMsg">A aguardar GPS…</p>
+      <p class="msg" id="calMsg"></p>
+      <button class="btn" id="recal" type="button">Recalibrar sensores</button>
+    </div>
+    <div class="panel" id="p-ligado" hidden>
+      <p>No telemóvel, abre esta página, escolhe <strong>Sensor</strong> e escreve o código</p>
+      <span class="code" id="hostCode">-----</span>
+      <p class="msg" id="hostMsg">A preparar ligação…</p>
+    </div>
+    <div class="panel" id="p-sensor" hidden>
+      <input type="text" id="codeIn" inputmode="numeric" maxlength="5" placeholder="código" autocomplete="off">
+      <button class="btn" id="codeGo" type="button">Ligar ao carro</button>
+      <p class="msg" id="sendMsg"></p>
+      <p class="msg" id="gpsMsg2"></p>
+      <p class="msg" id="calMsg2"></p>
+    </div>
+  </div>
+
   <main>
-    <div class="colA">
-      <section class="card stage" id="stage">
-        <div class="stageTop">
-          <div><div class="kicker" id="carTag"></div><h1 id="carName"></h1></div>
-          <div class="count"><b id="carIdx">01</b> / <span id="carTot">07</span></div>
-        </div>
-        <div class="carArea" id="carArea">
-          <button class="nav prev" id="prev" type="button" aria-label="Motor anterior">&#8249;</button>
-          <div class="car" id="car"></div>
-          <button class="nav next" id="next" type="button" aria-label="Motor seguinte">&#8250;</button>
-          <div class="road" id="road"></div>
-        </div>
-        <p class="credit" id="credit"></p>
-        <div class="stats">
-          <div><b id="stCyl"></b><span>cilindros</span></div>
-          <div><b id="stDisp"></b><span>cilindrada</span></div>
-          <div><b id="stRed"></b><span>rpm máx.</span></div>
-        </div>
-        <p class="desc" id="spec"></p>
-        <p class="desc note">Som simulado para este tipo de motor. Não é uma gravação deste carro.</p>
-        <div class="thumbs" id="engines"></div>
-      </section>
+    <section class="card stage" id="stage">
+      <div class="stageTop">
+        <div><div class="kicker" id="carTag"></div><h1 id="carName"></h1></div>
+        <div class="count"><b id="carIdx">01</b> / <span id="carTot">10</span></div>
+      </div>
+      <div class="carArea" id="carArea">
+        <button class="nav prev" id="prev" type="button" aria-label="Carro anterior">&#8249;</button>
+        <div class="car" id="car"></div>
+        <button class="nav next" id="next" type="button" aria-label="Carro seguinte">&#8250;</button>
+        <div class="road" id="road"></div>
+      </div>
+      <p class="credit" id="credit"></p>
+      <div class="stats">
+        <div><b id="stCyl"></b><span>cilindros</span></div>
+        <div><b id="stDisp"></b><span>cilindrada</span></div>
+        <div><b id="stRed"></b><span>rpm máx.</span></div>
+      </div>
+      <p class="desc" id="spec"></p>
+      <p class="desc note">Som simulado para este tipo de motor. Não é uma gravação deste carro.</p>
+      <div class="thumbs" id="engines"></div>
+    </section>
 
-      <section class="card source">
-        <h2>Fonte de velocidade</h2>
-        <div class="seg" id="modes">
-          <button type="button" data-m="teste"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/></svg>Teste</button>
-          <button type="button" data-m="gps"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>GPS</button>
-          <button type="button" data-m="ligado"><svg viewBox="0 0 24 24"><path d="M5 13a10 10 0 0 1 14 0M8 16a6 6 0 0 1 8 0"/><circle cx="12" cy="19" r="1.2"/><path d="M12 3v6m-2.5-2.5L12 9l2.5-2.5"/></svg>Receber</button>
-          <button type="button" data-m="sensor"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/><path d="M20 9v6M4 9v6"/></svg>Sensor</button>
+    <section class="card cluster">
+      <div class="leds" id="leds"></div>
+      <div class="tachWrap">
+        <canvas id="tach"></canvas>
+        <div class="readout">
+          <div class="gear" id="gear">–</div>
+          <div class="speed"><span id="spd">0</span><small>km/h</small></div>
+          <div class="rpmTxt"><span id="rpmTxt">0</span> rpm</div>
         </div>
-        <div class="panel" id="p-teste">
-          <p>Carrega nos pedais. Quanto mais acima tocares, mais fundo vai o pedal. Com o ponto-morto ligado, o acelerador só sobe as rotações, sem andar.</p>
-        </div>
-        <div class="panel" id="p-gps" hidden>
-          <p>Usa o GPS deste ecrã. Num telemóvel fixo num suporte, junta o acelerómetro para o som reagir mais depressa.</p>
-          <p class="msg" id="gpsMsg">A aguardar GPS…</p>
-          <p class="msg" id="calMsg"></p>
-          <button class="btn" id="recal" type="button">Recalibrar sensores</button>
-        </div>
-        <div class="panel" id="p-ligado" hidden>
-          <p>Este ecrã toca o som e recebe a velocidade de um telemóvel. No telemóvel, abre esta mesma página, escolhe <strong>Sensor</strong> e escreve o código:</p>
-          <div class="row"><span class="code" id="hostCode">-----</span></div>
-          <p class="msg" id="hostMsg">A preparar ligação…</p>
-        </div>
-        <div class="panel" id="p-sensor" hidden>
-          <p>Este telemóvel mede a velocidade e a aceleração e envia para o ecrã do carro. Fixa-o num suporte. O som sai no outro ecrã.</p>
-          <div class="row">
-            <input type="text" id="codeIn" inputmode="numeric" maxlength="5" placeholder="código" autocomplete="off">
-            <button class="btn" id="codeGo" type="button">Ligar ao carro</button>
-          </div>
-          <p class="msg" id="sendMsg"></p>
-          <p class="msg" id="gpsMsg2"></p>
-          <p class="msg" id="calMsg2"></p>
-        </div>
-      </section>
+        <button class="start" id="power" type="button"><b id="powerTxt">LIGAR</b><small>motor</small></button>
+      </div>
+    </section>
 
-      <section class="card audio">
-        <div class="volrow"><label for="vol">Volume</label><input type="range" id="vol" min="0" max="100" value="80"></div>
-        <div class="models" id="models"><span>Tipo de som</span><button type="button" class="btn" data-k="s">Gravado</button><button type="button" class="btn" data-k="w">Sintetizado</button></div>
-        <p class="diag" id="diag">Áudio: ainda não iniciado</p>
-        <p class="diag">Sons gravados: CryHam, projeto Stunt Rally 3, licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, feitos no simulador engine-sim e aqui cortados, nivelados e comprimidos. <a href="https://github.com/stuntrally/stuntrally3">Origem</a>.</p>
-      </section>
-    </div>
-
-    <div class="colB">
-      <section class="card cluster">
-        <div class="leds" id="leds"></div>
-        <div class="tachWrap">
-          <canvas id="tach"></canvas>
-          <div class="readout">
-            <div class="gear" id="gear">–</div>
-            <div class="speed"><span id="spd">0</span><small>km/h</small></div>
-            <div class="rpmTxt"><span id="rpmTxt">0</span> rpm</div>
-          </div>
-          <button class="start" id="power" type="button"><b id="powerTxt">LIGAR</b><small>motor</small></button>
-        </div>
-      </section>
-
-      <section class="card pedals" id="pedals">
-        <button class="toggle" id="neutral" type="button"><i>N</i>Ponto-morto<em id="neutralTxt">desligado</em></button>
-        <button class="toggle" id="auto" type="button"><i>A</i>Revs automáticos<em id="autoTxt">desligado</em></button>
-        <div class="delay" id="delay"><span>Começar após</span><button type="button" class="btn" data-d="0">0 s</button><button type="button" class="btn" data-d="2">2 s</button><button type="button" class="btn" data-d="5">5 s</button><button type="button" class="btn" data-d="10">10 s</button></div>
-        <details class="boom"><summary>Som cá fora com o Boombox (só parado)</summary>
-          <p>1. Com o carro em Park, liga o motor aqui e ativa os revs automáticos.</p>
-          <p>2. No ecrã do Tesla, abre Toybox, depois Boombox, e escolhe reproduzir a multimédia atual.</p>
-          <p>3. Ajusta o volume no Boombox. Ao sair de Park, o som volta a ficar só dentro do carro.</p>
-        </details>
-        <p class="hint" id="revHint" hidden>Com o carro parado, carrega aqui para acelerar em ponto-morto.</p>
-        <div class="pedal brake" id="brake" tabindex="0" role="button" aria-label="Travão"><div class="fill"></div><span>Travão</span><u></u></div>
-        <div class="pedal gas" id="gas" tabindex="0" role="button" aria-label="Acelerador"><div class="fill"></div><span>Acelerador</span><u></u></div>
-      </section>
-    </div>
+    <section class="card pedals" id="pedals">
+      <button class="toggle" id="neutral" type="button"><i>N</i><span>Ponto-morto</span><em id="neutralTxt">desligado</em></button>
+      <button class="toggle" id="auto" type="button"><i>A</i><span>Revs automáticos</span><em id="autoTxt">desligado</em></button>
+      <div class="delay" id="delay"><span>Começar após</span><button type="button" class="btn" data-d="0">0 s</button><button type="button" class="btn" data-d="2">2 s</button><button type="button" class="btn" data-d="5">5 s</button><button type="button" class="btn" data-d="10">10 s</button></div>
+      <p class="hint" id="revHint" hidden>Com o carro parado, carrega no acelerador para dar revs em ponto-morto.</p>
+      <div class="pedal brake" id="brake" tabindex="0" role="button" aria-label="Travão"><div class="fill"></div><span>Travão</span><u></u></div>
+      <div class="pedal gas" id="gas" tabindex="0" role="button" aria-label="Acelerador"><div class="fill"></div><span>Acelerador</span><u></u></div>
+    </section>
   </main>
+</div>
+
+<div class="modal" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-label="Definições">
+    <div class="sheetTop"><h2>Definições</h2><button class="btn" id="closeSet" type="button">Fechar</button></div>
+    <h3><label for="vol">Volume</label></h3>
+    <div class="volrow"><input type="range" id="vol" min="0" max="100" value="80"></div>
+    <h3>Tipo de som</h3>
+    <div class="models" id="models"><button type="button" class="btn" data-k="s">Gravado</button><button type="button" class="btn" data-k="w">Sintetizado</button></div>
+    <h3>Fontes de velocidade</h3>
+    <p><strong>Teste:</strong> usa os pedais no ecrã. Quanto mais acima tocares, mais fundo vai o pedal. Com o ponto-morto ligado, o acelerador só sobe as rotações.</p>
+    <p><strong>GPS:</strong> usa o GPS deste ecrã. Num telemóvel fixo num suporte, junta o acelerómetro para o som reagir mais depressa.</p>
+    <p><strong>Receber:</strong> este ecrã toca o som e recebe a velocidade de um telemóvel, através de um código.</p>
+    <p><strong>Sensor:</strong> este telemóvel mede a velocidade e a aceleração e envia para o ecrã do carro. Fixa-o num suporte. O som sai no outro ecrã.</p>
+    <h3>Som cá fora com o Boombox (só parado)</h3>
+    <p>1. Com o carro em Park, liga o motor aqui e ativa os revs automáticos.</p>
+    <p>2. No ecrã do Tesla, abre Toybox, depois Boombox, e escolhe reproduzir a multimédia atual.</p>
+    <p>3. Ajusta o volume no Boombox. Ao sair de Park, o som volta a ficar só dentro do carro.</p>
+    <h3>Estado e créditos</h3>
+    <p class="diag" id="diag">Áudio: ainda não iniciado</p>
+    <p class="diag">Sons gravados: CryHam, projeto Stunt Rally 3, licença <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, feitos no simulador engine-sim e aqui cortados, nivelados e comprimidos. <a href="https://github.com/stuntrally/stuntrally3">Origem</a>. Fotos: Wikimedia Commons, com o crédito por baixo de cada carro.</p>
+  </div>
 </div>
 
 <script>
@@ -818,6 +843,7 @@ function draw(){
   const e=ENGINES[S.eng], dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
   cx.setTransform(dpr,0,0,dpr,0,0); cx.clearRect(0,0,w,h);
+  { const ts=Math.round(Math.min(w,h/0.92)); if(ts!==draw.ts&&ts>0){ draw.ts=ts; cv.parentNode.style.setProperty('--ts',ts+'px'); } }
   const X=w/2, Y=h*0.52, r=Math.min(w*0.455,h*0.49), a0=Math.PI*0.75, sw=Math.PI*1.5, max=Math.ceil(e.red/1000)+1, N=max*8, da=sw/N;
   cx.lineCap='butt'; cx.lineWidth=r*0.1; cx.shadowBlur=0;
   for(let pass=0;pass<2;pass++){
@@ -905,7 +931,7 @@ function setEngine(i,anim){
   const n3=parseInt(e.color.slice(1),16);
   document.documentElement.style.setProperty('--accent',e.color);
   document.documentElement.style.setProperty('--accent-rgb',(n3>>16)+','+(n3>>8&255)+','+(n3&255));
-  [...$('engines').children].forEach((c,k)=>{ c.classList.toggle('sel',k===i); if(k===i&&c.scrollIntoView&&anim) c.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}); });
+  [...$('engines').children].forEach((c,k)=>{ c.classList.toggle('sel',k===i); });
   $('carTag').textContent=e.tag; $('carName').textContent=e.name; $('carIdx').textContent=String(i+1).padStart(2,'0'); $('carTot').textContent=String(n).padStart(2,'0');
   $('stCyl').textContent=e.n; $('stDisp').textContent=e.disp; $('stRed').textContent=e.red; $('spec').textContent=e.desc;
   const car=$('car'), ph=PHOTOS[e.id], cr=$('credit'); cr.textContent='';
@@ -977,6 +1003,9 @@ document.addEventListener('contextmenu',ev=>{ if(ev.target.closest('.pedal')) ev
 function setModel(k){ Snd.setModel(k); store.set('model2',k); [...$('models').querySelectorAll('button')].forEach(b=>b.classList.toggle('sel',b.dataset.k===k)); }
 [...$('models').querySelectorAll('button')].forEach(b=>b.onclick=()=>setModel(b.dataset.k));
 setModel(store.get('model2','s')==='w'?'w':'s');
+$('openSet').onclick=()=>{ $('settings').hidden=false; };
+$('closeSet').onclick=()=>{ $('settings').hidden=true; };
+$('settings').addEventListener('click',ev=>{ if(ev.target===$('settings')) $('settings').hidden=true; });
 $('vol').oninput=()=>{ S.vol=$('vol').value/100; store.set('vol',$('vol').value); };
 $('vol').value=store.get('vol','80'); S.vol=$('vol').value/100;
 
