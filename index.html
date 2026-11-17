@@ -352,7 +352,7 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
     <h3>Tipo de som</h3>
     <div class="models" id="models"><button type="button" class="btn" data-k="s">Gravado</button><button type="button" class="btn" data-k="w">Sintetizado</button></div>
     <h3>Caixa de velocidades</h3>
-    <div class="models"><span class="userNow">Caixa curta (última mudança até 150 km/h)</span><button type="button" class="btn" id="shortBtn">Ligada</button></div>
+    <div class="models"><span class="userNow">Caixa curta (mudanças até 150 km/h, última de cruzeiro)</span><button type="button" class="btn" id="shortBtn">Ligada</button></div>
     <p>Ligada, as mudanças passam a velocidades do dia a dia. Desligada, usa velocidades próximas das do carro real.</p>
     <h3>Estalos de escape</h3>
     <div class="models"><span class="userNow">Estalos ao desacelerar</span><button type="button" class="btn" id="popsBtn">Desligados</button></div>
@@ -644,9 +644,9 @@ const WGP={
  bug:{dr:1.3,turb:0.25,hs:4,hf:600,tj:0.0012,li:60,le:70,lx:60,ls:130,muf:[7,10,13,17],act:0.12,ign:0.012,inz:1,gi:0.7,gb:0.12,go:1,pop:6,lp:[1500,12000],level:0.18}
 };
 ENGINES.forEach(e=>{ e.wg=WGP[e.id];
-  // Duas caixas por carro. Curta (por defeito): a mudança mais alta chega ao corte aos 150 km/h e a primeira aos 30, com o número
-  // real de mudanças, para as passagens se ouvirem a velocidades do dia a dia. Longa: velocidades próximas das do carro real.
-  { const n=e.tops.length, r=Math.pow(150/30,1/(n-1)); e.topsShort=Array.from({length:n},(_,i)=>Math.round(30*Math.pow(r,i))); }
+  // Duas caixas por carro. Curta (por defeito): a penúltima mudança chega ao corte aos 150 km/h e a primeira aos 30, para as passagens
+  // se ouvirem a velocidades do dia a dia; a última é longa (260 km/h), só para cruzeiro. Longa: velocidades próximas das do carro real.
+  { const n=e.tops.length, r=Math.pow(150/30,1/(n-2)); e.topsShort=Array.from({length:n},(_,i)=>i===n-1?260:Math.round(30*Math.pow(r,i))); }
   { const first=e.tops[0]*0.85, last=e.tops[e.tops.length-1], n=Math.max(6,Math.ceil(Math.log(last/first)/Math.log(1.25))+1), r=Math.pow(last/first,1/(n-1));
     e.topsLong=Array.from({length:n},(_,i)=>Math.round(first*Math.pow(r,i))); }
   e.tops=e.topsShort; });
