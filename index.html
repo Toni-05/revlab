@@ -1075,8 +1075,22 @@ const Log={cur:null,
   start(){ this.cur={u:S.user||'Sem nome',car:ENGINES[S.eng].name,m:S.mode,t:Date.now(),d:0}; const a=this.all(); a.push(this.cur); this.save(a); },
   tick(){ if(!this.cur) return; this.cur.d=Math.round((Date.now()-this.cur.t)/1000); this.cur.car=ENGINES[S.eng].name; this.cur.m=S.mode;
     const a=this.all(); if(a.length&&a[a.length-1].t===this.cur.t) a[a.length-1]=this.cur; else a.push(this.cur); this.save(a); },
-  stop(){ this.tick(); this.cur=null; }
+  stop(){ this.tick(); this.cur=null; flushRemote(); }
 };
+// Cópia de cada utilização para a folha do dono da app (Google Forms -> Sheets). Só segue quando a sessão termina.
+const REMOTE={url:'https://docs.google.com/forms/d/e/1FAIpQLScP9VeMlIjYWShYYk14DY-E1147p_6qOCVBiHtRhoTcks3KJg/formResponse',
+  u:'entry.892213990',car:'entry.909135473',m:'entry.657022863',t:'entry.535672115',d:'entry.1345016425',dev:'entry.251958668'};
+function devName(){ const ua=navigator.userAgent||''; const k=/Tesla|QtCarBrowser/i.test(ua)?'Tesla':/iPad/i.test(ua)?'iPad':/iPhone/i.test(ua)?'iPhone':/Android/i.test(ua)?'Android':/Windows/i.test(ua)?'Windows':/Macintosh/i.test(ua)?'Mac':'Outro'; return k+' '+screen.width+'x'+screen.height; }
+function sendRemote(x){
+  if(!/^https?:$/.test(location.protocol)) return false;
+  const dt=new Date(x.t), p2=n=>String(n).padStart(2,'0'), q=new URLSearchParams();
+  q.set(REMOTE.u,x.u); q.set(REMOTE.car,x.car); q.set(REMOTE.m,x.m||''); q.set(REMOTE.d,String(x.d)); q.set(REMOTE.dev,devName());
+  q.set(REMOTE.t,dt.getFullYear()+'-'+p2(dt.getMonth()+1)+'-'+p2(dt.getDate())+' '+p2(dt.getHours())+':'+p2(dt.getMinutes())+':'+p2(dt.getSeconds()));
+  try{ if(navigator.sendBeacon&&navigator.sendBeacon(REMOTE.url,q)) return true; }catch(_){}
+  try{ fetch(REMOTE.url,{method:'POST',mode:'no-cors',body:q,keepalive:true}).catch(()=>{}); return true; }catch(_){ return false; }
+}
+function flushRemote(){ const a=Log.all(); let ch=false; a.forEach(x=>{ if(!x.s&&x.d>=5&&!(Log.cur&&Log.cur.t===x.t)){ if(sendRemote(x)){ x.s=1; ch=true; } } }); if(ch) Log.save(a); }
+setTimeout(flushRemote,1500);
 setInterval(()=>Log.tick(),5000);
 window.addEventListener('pagehide',()=>Log.tick());
 function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), x=sec%60; return h?h+' h '+String(m).padStart(2,'0')+' min':m?m+' min '+String(x).padStart(2,'0')+' s':x+' s'; }
