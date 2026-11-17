@@ -988,7 +988,9 @@ function panels(now){
 }
 
 function setEngine(i,anim){
-  const n=ENGINES.length; i=((i%n)+n)%n; S.eng=i; const e=ENGINES[i]; store.set('eng',e.id); if(S.user) store.set('eng.'+S.user,e.id);
+  const n=ENGINES.length; i=((i%n)+n)%n;
+  const split=S.on&&Log.cur&&i!==S.eng; if(split) Log.stop();   // cada carro fica com o seu registo
+  S.eng=i; const e=ENGINES[i]; if(split) Log.start(); store.set('eng',e.id); if(S.user) store.set('eng.'+S.user,e.id);
   const n3=parseInt(e.color.slice(1),16);
   document.documentElement.style.setProperty('--accent',e.color);
   document.documentElement.style.setProperty('--accent-rgb',(n3>>16)+','+(n3>>8&255)+','+(n3&255));
@@ -1075,7 +1077,9 @@ const Log={cur:null,
   start(){ this.cur={u:S.user||'Sem nome',car:ENGINES[S.eng].name,m:S.mode,t:Date.now(),d:0}; const a=this.all(); a.push(this.cur); this.save(a); },
   tick(){ if(!this.cur) return; this.cur.d=Math.round((Date.now()-this.cur.t)/1000); this.cur.car=ENGINES[S.eng].name; this.cur.m=S.mode;
     const a=this.all(); if(a.length&&a[a.length-1].t===this.cur.t) a[a.length-1]=this.cur; else a.push(this.cur); this.save(a); },
-  stop(){ this.tick(); this.cur=null; flushRemote(); }
+  stop(){ this.tick(); const c=this.cur; this.cur=null;
+    if(c&&c.d<3){ const a=this.all().filter(x=>x.t!==c.t); this.save(a); }   // passagens rápidas por um carro não contam
+    flushRemote(); }
 };
 // Cópia de cada utilização para a folha do dono da app (Google Forms -> Sheets). Só segue quando a sessão termina.
 const REMOTE={url:'https://docs.google.com/forms/d/e/1FAIpQLScP9VeMlIjYWShYYk14DY-E1147p_6qOCVBiHtRhoTcks3KJg/formResponse',
