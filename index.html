@@ -968,17 +968,20 @@ function setMode(m){
 [...$('modes').children].forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 $('recal').onclick=()=>Sensors.recal();
 $('codeGo').onclick=()=>{ const c=$('codeIn').value.trim(); if(/^\d{5}$/.test(c)) Link.send(c); else Link.msg='Escreve os 5 algarismos que aparecem no ecrã do carro.'; };
-$('auto').onclick=()=>{ S.auto=!S.auto; S.autoAt=performance.now()+S.autoDelay*1000; $('auto').classList.toggle('sel',S.auto); $('autoTxt').textContent=S.auto?'ligado':'desligado'; if(S.auto&&S.mode==='teste'&&!S.neutral) $('neutral').click(); };
+$('auto').onclick=()=>{ S.auto=!S.auto; S.autoAt=performance.now()+S.autoDelay*1000; $('auto').classList.toggle('sel',S.auto); $('autoTxt').textContent=S.auto?'ligado':'desligado'; if(S.auto&&S.mode==='teste'&&!S.neutral) setNeutral(true); };
 function setDelay(d){ S.autoDelay=d; store.set('delay',String(d)); [...$('delay').querySelectorAll('button')].forEach(b=>b.classList.toggle('sel',+b.dataset.d===d)); if(S.auto) S.autoAt=performance.now()+d*1000; }
 [...$('delay').querySelectorAll('button')].forEach(b=>b.onclick=()=>setDelay(+b.dataset.d));
 setDelay([0,2,5,10].includes(+store.get('delay','0'))?+store.get('delay','0'):0);
-$('neutral').onclick=()=>{ S.neutral=!S.neutral; $('neutral').classList.toggle('sel',S.neutral); $('neutralTxt').textContent=S.neutral?'ligado':'desligado'; };
+function setNeutral(v){ S.neutral=v; $('neutral').classList.toggle('sel',v); $('neutralTxt').textContent=v?'ligado':'desligado'; }
+$('neutral').onclick=()=>setNeutral(!S.neutral);
+setNeutral(true);
 ['pointerdown','touchend','click'].forEach(t=>document.addEventListener(t,()=>{ if(S.on) Snd.kick(); },true));
 
 $('power').onclick=()=>{
   const b=$('power');
   if(S.on){ S.on=false; $('powerTxt').textContent='LIGAR'; b.classList.remove('on'); return; }
   try{ Snd.start(); }catch(err){ $('powerTxt').textContent='SEM SOM'; return; }
+  if(S.mode==='teste'){ setNeutral(true); S.v=0; }
   S.on=true; S.rpm=ENGINES[S.eng].idle*1.7; $('powerTxt').textContent='PARAR'; b.classList.add('on');
   try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').catch(()=>{}); }catch(_){}
 };
