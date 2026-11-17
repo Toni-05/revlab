@@ -144,10 +144,22 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
 .brand{margin-right:0}
 .greet{margin-right:auto;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;padding-left:10px;border-left:1px solid var(--line)}
 .greet b{color:var(--text);font-weight:600}
-.hello{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;cursor:pointer;
-  background:radial-gradient(70% 60% at 50% 55%,rgba(var(--accent-rgb),.32),rgba(var(--accent-rgb),0) 70%),#07090d;animation:helloOut .55s ease 2.7s forwards}
+.hello{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(70% 60% at 50% 55%,rgba(var(--accent-rgb),.32),rgba(var(--accent-rgb),0) 70%),#07090d}
+.hello.go{cursor:pointer;animation:helloOut .55s ease 2.7s forwards}
 .helloIn{text-align:center;max-width:100%}
-.hello p{margin:0;font-family:var(--font-display);text-transform:uppercase;line-height:.95;opacity:0;animation:helloUp .6s cubic-bezier(.2,.8,.2,1) forwards}
+.who{text-align:center;width:100%;max-width:720px}
+.whoT{margin:0 0 22px;font-family:var(--font-display);font-weight:900;font-size:clamp(34px,7vw,76px);text-transform:uppercase;line-height:.95;animation:helloUp .5s cubic-bezier(.2,.8,.2,1) both}
+.whoRow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.whoBtn{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 12px;border-radius:20px;border:1px solid var(--line);background:rgba(18,22,29,.85);cursor:pointer;
+  animation:helloUp .5s cubic-bezier(.2,.8,.2,1) .12s both;transition:border-color .15s,transform .15s}
+.whoBtn+.whoBtn{animation-delay:.2s}
+.whoBtn:hover,.whoBtn:active{border-color:var(--accent);transform:translateY(-2px)}
+.whoBtn i{font-style:italic;font-family:var(--font-display);font-weight:900;font-size:clamp(38px,7vw,64px);line-height:1;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;
+  color:#0b0d10;background:var(--accent);box-shadow:0 0 0 6px rgba(var(--accent-rgb),.15)}
+.whoBtn span{font-family:var(--font-display);font-weight:800;font-size:clamp(22px,4vw,36px);text-transform:uppercase;letter-spacing:.04em}
+
+.helloIn p{margin:0;font-family:var(--font-display);text-transform:uppercase;line-height:.95;opacity:0;animation:helloUp .6s cubic-bezier(.2,.8,.2,1) forwards}
 .helloA{font-weight:800;font-style:italic;font-size:clamp(26px,5.5vw,56px);color:var(--accent);letter-spacing:.04em}
 .helloB{font-weight:900;font-size:clamp(44px,10.5vw,128px);animation-delay:.28s!important;text-wrap:balance}
 .helloLine{display:block;height:5px;width:0;margin:18px auto 0;border-radius:99px;background:var(--accent);box-shadow:0 0 18px var(--accent);animation:helloRev 1.5s cubic-bezier(.5,0,.2,1) .7s forwards}
@@ -165,7 +177,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
 .sheet p strong{color:var(--text)}
 .volrow{display:flex;align-items:center;gap:12px}
 input[type=range]{flex:1;accent-color:var(--accent);height:28px}
-.models{display:flex;gap:8px;flex-wrap:wrap}
+.models{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.userNow{font-weight:600;margin-right:auto}
 .diag{margin:6px 0 0;font-size:12px;color:var(--muted)}
 button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 [hidden]{display:none!important}
@@ -202,14 +215,14 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
 }
 @media (min-width:700px) and (max-width:920px){ .iconbtn span{display:none} .iconbtn{padding:8px 10px} }
 @media (max-width:1150px){ .greet{display:none} .brand{margin-right:auto} }
-@media (prefers-reduced-motion:reduce){.hello p{animation:none;opacity:1}.helloLine{animation:none;width:min(70vw,620px)}.start{animation:none}.car.swap .photo{animation:none}}
+@media (prefers-reduced-motion:reduce){.helloIn p{animation:none;opacity:1}.helloLine{animation:none;width:min(70vw,620px)}.start{animation:none}.car.swap .photo{animation:none}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="brand">Rev<b>Lab</b></div>
-    <div class="greet">Olá Felisberto, <b>escolhe a tua máquina.</b></div>
+    <div class="greet" id="greet" hidden>Olá <span id="greetName"></span>, <b>escolhe a tua máquina.</b></div>
     <div class="seg" id="modes">
       <button type="button" data-m="teste"><svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="3"/><path d="M10 8h4M10 12h4M10 16h4"/></svg>Teste</button>
       <button type="button" data-m="gps"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>GPS</button>
@@ -288,9 +301,16 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
   </main>
 </div>
 
-<div class="hello" id="hello" role="status">
-  <div class="helloIn">
-    <p class="helloA">Olá Felisberto,</p>
+<div class="hello" id="hello">
+  <div class="who" id="who">
+    <p class="whoT">Quem conduz hoje?</p>
+    <div class="whoRow">
+      <button type="button" class="whoBtn" data-u="António"><i>A</i><span>António</span></button>
+      <button type="button" class="whoBtn" data-u="Felisberto"><i>F</i><span>Felisberto</span></button>
+    </div>
+  </div>
+  <div class="helloIn" id="helloIn" role="status" hidden>
+    <p class="helloA">Olá <span id="helloName"></span>,</p>
     <p class="helloB">escolhe a tua máquina.</p>
     <i class="helloLine"></i>
   </div>
@@ -299,6 +319,8 @@ button:focus-visible,input:focus-visible,.pedal:focus-visible{outline:2px solid 
 <div class="modal" id="settings" hidden>
   <div class="sheet" role="dialog" aria-label="Definições">
     <div class="sheetTop"><h2>Definições</h2><button class="btn" id="closeSet" type="button">Fechar</button></div>
+    <h3>Utilizador</h3>
+    <div class="models"><span class="userNow" id="userNow">por escolher</span><button type="button" class="btn" id="swapUser">Trocar utilizador</button></div>
     <h3><label for="vol">Volume</label></h3>
     <div class="volrow"><input type="range" id="vol" min="0" max="100" value="80"></div>
     <h3>Tipo de som</h3>
@@ -954,7 +976,7 @@ function panels(now){
 }
 
 function setEngine(i,anim){
-  const n=ENGINES.length; i=((i%n)+n)%n; S.eng=i; const e=ENGINES[i]; store.set('eng',e.id);
+  const n=ENGINES.length; i=((i%n)+n)%n; S.eng=i; const e=ENGINES[i]; store.set('eng',e.id); if(S.user) store.set('eng.'+S.user,e.id);
   const n3=parseInt(e.color.slice(1),16);
   document.documentElement.style.setProperty('--accent',e.color);
   document.documentElement.style.setProperty('--accent-rgb',(n3>>16)+','+(n3>>8&255)+','+(n3&255));
@@ -1034,7 +1056,18 @@ document.addEventListener('contextmenu',ev=>{ if(ev.target.closest('.pedal')) ev
 function setModel(k){ Snd.setModel(k); store.set('model2',k); [...$('models').querySelectorAll('button')].forEach(b=>b.classList.toggle('sel',b.dataset.k===k)); }
 [...$('models').querySelectorAll('button')].forEach(b=>b.onclick=()=>setModel(b.dataset.k));
 setModel(store.get('model2','s')==='w'?'w':'s');
-{ const h=$('hello'), bye=()=>{ if(h.parentNode) h.remove(); }; h.addEventListener('click',bye); setTimeout(bye,3400); }
+// Utilizador: escolhe-se ao abrir; cada um fica com o último carro que usou.
+let helloT=0;
+function askUser(){ clearTimeout(helloT); const h=$('hello'); h.classList.remove('go'); $('helloIn').hidden=true; $('who').hidden=false; h.hidden=false; }
+function pickUser(u){
+  S.user=u; store.set('user',u); $('helloName').textContent=u; $('greetName').textContent=u; $('greet').hidden=false; $('userNow').textContent=u;
+  const i=ENGINES.findIndex(e=>e.id===store.get('eng.'+u,'')); if(i>=0&&i!==S.eng) setEngine(i,false);
+  const h=$('hello'); $('who').hidden=true; $('helloIn').hidden=false; h.classList.add('go');
+  clearTimeout(helloT); helloT=setTimeout(()=>{ h.hidden=true; },3400);
+}
+[...document.querySelectorAll('.whoBtn')].forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); pickUser(b.dataset.u); });
+$('hello').addEventListener('click',()=>{ if($('hello').classList.contains('go')){ clearTimeout(helloT); $('hello').hidden=true; } });
+$('swapUser').onclick=()=>{ $('settings').hidden=true; askUser(); };
 $('openSet').onclick=()=>{ $('settings').hidden=false; };
 $('closeSet').onclick=()=>{ $('settings').hidden=true; };
 $('settings').addEventListener('click',ev=>{ if(ev.target===$('settings')) $('settings').hidden=true; });
