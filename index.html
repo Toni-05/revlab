@@ -134,6 +134,8 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
   background:repeating-linear-gradient(180deg,#1b212b 0 10px,#12161d 10px 20px)}
 .pedal .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(180deg,rgba(var(--accent-rgb),.95),rgba(var(--accent-rgb),.55));mix-blend-mode:screen}
 .pedal.brake .fill{background:linear-gradient(180deg,rgba(255,61,51,.95),rgba(255,61,51,.55))}
+.pedal::before{content:"100%";position:absolute;left:0;right:0;top:0;height:30%;border-bottom:1px dashed rgba(255,255,255,.28);background:rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:15px;letter-spacing:.08em;color:rgba(255,255,255,.4);pointer-events:none}
 .pedal span{position:absolute;left:10px;bottom:8px;font-family:var(--font-display);font-weight:800;font-size:18px;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;text-shadow:0 1px 6px #000}
 .pedal u{position:absolute;right:10px;bottom:8px;text-decoration:none;font-family:var(--font-display);font-weight:800;font-size:18px;pointer-events:none;font-variant-numeric:tabular-nums;text-shadow:0 1px 6px #000}
 .hint{margin:0;color:var(--muted);font-size:12.5px}
@@ -989,7 +991,8 @@ $('power').onclick=()=>{
 function pedal(el,key){
   const fill=el.firstElementChild, pct=el.querySelector('u');
   const set=v=>{ S[key]=v; fill.style.height=(v*100)+'%'; pct.textContent=v>0?Math.round(v*100)+'%':''; };
-  const from=ev=>{ const r=el.getBoundingClientRect(); set(clamp(1.08-(ev.clientY-r.top)/r.height,0.15,1)); };
+  // Os 30% de cima do pedal contam como a fundo; daí para baixo desce até 15%.
+  const from=ev=>{ const r=el.getBoundingClientRect(), f=(ev.clientY-r.top)/r.height; set(f<=0.3?1:clamp(1-(f-0.3)/0.7*0.85,0.15,1)); };
   let down=false;
   el.addEventListener('pointerdown',ev=>{ down=true; try{el.setPointerCapture(ev.pointerId);}catch(_){} from(ev); ev.preventDefault(); });
   el.addEventListener('pointermove',ev=>{ if(down) from(ev); });
